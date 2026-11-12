@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- brillo del horizonte -->
+    <path android:pathData="M54,72m-34,0a34,34 0,1 1,68 0a34,34 0,1 1,-68 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="54"
+                android:centerY="72"
+                android:gradientRadius="34"
+                android:type="radial">
+                <item android:color="#FFFFFFFF" android:offset="0" />
+                <item android:color="#FFFF7A3C" android:offset="0.35" />
+                <item android:color="#FFE0336C" android:offset="0.65" />
+                <item android:color="#00E0336C" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- colina, casa y arbol -->
+    <path
+        android:fillColor="#050508"
+        android:pathData="M18,90 L18,70 C30,65 42,66 54,70 C66,74 78,66 90,68 L90,90Z" />
+    <path
+        android:fillColor="#050508"
+        android:pathData="M60,58 h14 v12 h-14Z M57.500,59 L67,50 L76.500,59Z M71,51 h2.500 v6 h-2.500Z" />
+    <path
+        android:fillColor="#050508"
+        android:pathData="M48,60 h2 v10 h-2Z M49,56m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path
+        android:fillColor="#FFCF70"
+        android:pathData="M62.500,61.500 h3.500 v3.500 h-3.500Z M68.500,61.500 h3.500 v3.500 h-3.500Z" />
+</vector>
