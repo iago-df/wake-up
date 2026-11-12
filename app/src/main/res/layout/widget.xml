@@ -17,8 +17,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="monospace"
-        android:format12Hour="'HOY · 'HH:mm"
-        android:format24Hour="'HOY · 'HH:mm"
+        android:format12Hour="'TODAY · 'HH:mm"
+        android:format24Hour="'TODAY · 'HH:mm"
         android:letterSpacing="0.16"
         android:textColor="#B9B9C8"
         android:textSize="11sp" />

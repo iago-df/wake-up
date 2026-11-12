@@ -40,7 +40,7 @@ object ClaudeApi {
             }
             val code = con.responseCode
             val text = (if (code in 200..299) con.inputStream else con.errorStream)?.bufferedReader()?.use { it.readText() } ?: ""
-            if (code == 401) throw IllegalStateException("token incorrecto")
+            if (code == 401) throw IllegalStateException(tr("token incorrecto", "wrong token"))
             if (code !in 200..299) throw IllegalStateException(runCatching { JSONObject(text).getString("error") }.getOrDefault("error $code"))
             return JSONObject(text)
         } finally {
@@ -110,7 +110,7 @@ class ClaudeModel(private val state: AppState, private val scope: CoroutineScope
         if (text.isEmpty()) return
         draft = ""
         chat.add(Bubble(true, text))
-        val reply = Bubble(false, "En ello…", pending = true)
+        val reply = Bubble(false, tr("En ello…", "On it…"), pending = true)
         chat.add(reply)
         val cfg = state.server
         scope.launch {
@@ -124,12 +124,12 @@ class ClaudeModel(private val state: AppState, private val scope: CoroutineScope
                     tries++
                 }
                 reply.text = when {
-                    o.status == "running" -> "sigue trabajando en tu PC…"
-                    o.output.isBlank() -> if (o.status == "done") "Hecho." else "algo falló"
+                    o.status == "running" -> tr("sigue trabajando en tu PC…", "still working on your PC…")
+                    o.output.isBlank() -> if (o.status == "done") tr("Hecho.", "Done.") else tr("algo falló", "something failed")
                     else -> o.output.take(1500)
                 }
             } catch (e: Exception) {
-                reply.text = "no se pudo enviar: ${friendly(e)}"
+                reply.text = "${tr("no se pudo enviar", "could not send")}: ${friendly(e)}"
             }
             reply.pending = false
             refresh()
@@ -142,19 +142,19 @@ class ClaudeModel(private val state: AppState, private val scope: CoroutineScope
             it.title.contains(p.name, ignoreCase = true) || it.project.contains(p.name, ignoreCase = true)
         }
         selected = match?.id
-        draft = "Sigue con ${p.name}: "
+        draft = "${tr("Sigue con", "Continue with")} ${p.name}: "
     }
 
     private fun friendly(e: Throwable): String = when (e) {
-        is java.net.SocketTimeoutException, is java.net.ConnectException, is java.net.UnknownHostException, is java.net.NoRouteToHostException -> "no llego al servidor"
-        is java.net.MalformedURLException -> "la url no es válida"
+        is java.net.SocketTimeoutException, is java.net.ConnectException, is java.net.UnknownHostException, is java.net.NoRouteToHostException -> tr("no llego al servidor", "can't reach the server")
+        is java.net.MalformedURLException -> tr("la url no es válida", "the url is not valid")
         else -> e.message ?: "error"
     }
 }
 
 /** 1,24 M / 312k */
 fun fmtTokens(n: Long): String = when {
-    n >= 1_000_000 -> String.format(Locale.US, "%.2f", n / 1_000_000.0).replace('.', ',') + " M"
+    n >= 1_000_000 -> String.format(Locale.US, "%.2f", n / 1_000_000.0).let { if (Lang.en) it else it.replace('.', ',') } + " M"
     n >= 1_000 -> "${n / 1000}k"
     else -> n.toString()
 }

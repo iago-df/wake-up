@@ -1,5 +1,7 @@
 package com.iagodf.wakeup.ui
 
+import com.iagodf.wakeup.data.tr
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -26,7 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 
-val TABS = listOf("Tiempo", "Proyectos", "Claude")
+val TABS: List<String> get() = listOf(tr("Tiempo", "Time"), tr("Proyectos", "Projects"), "Claude")
 
 @Composable
 fun NavBar(selected: Int, modifier: Modifier = Modifier, onSelect: (Int) -> Unit) {

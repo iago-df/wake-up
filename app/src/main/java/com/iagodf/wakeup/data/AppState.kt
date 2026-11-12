@@ -17,6 +17,8 @@ class AppState(ctx: Context) {
     private val app = ctx.applicationContext
     val store = Store(app)
 
+    init { Lang.load(app) }
+
     var settings by mutableStateOf(store.settings()); private set
     var projects by mutableStateOf(store.projects()); private set
     var attended by mutableStateOf(store.attended()); private set
@@ -186,8 +188,4 @@ class AppState(ctx: Context) {
 fun fmtHM(min: Int): String = if (min < 60) "$min min" else "${min / 60} h ${min % 60} min"
 
 /** 3,8 h  /  5 h */
-fun fmtH(min: Int): String {
-    val h = min / 60f
-    val r = (h * 10).roundToInt() / 10f
-    return (if (r == r.toInt().toFloat()) r.toInt().toString() else r.toString().replace('.', ',')) + " h"
-}
+fun fmtH(min: Int): String = fmtDec(min / 60f) + " h"

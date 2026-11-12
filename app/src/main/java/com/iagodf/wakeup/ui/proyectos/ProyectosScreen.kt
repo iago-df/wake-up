@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.iagodf.wakeup.data.AppState
 import com.iagodf.wakeup.data.Project
+import com.iagodf.wakeup.data.tr
 import com.iagodf.wakeup.data.fmtH
 import com.iagodf.wakeup.ui.Gap
 import com.iagodf.wakeup.ui.Header
@@ -49,9 +50,9 @@ fun ProyectosScreen(state: AppState, onLog: () -> Unit, onClaude: (Project) -> U
     var open by remember { mutableStateOf<Long?>(null) }
     val lost = state.lostHours()
     ScreenColumn {
-        Header("Proyectos", "por prioridad") {
+        Header(tr("Proyectos", "Projects"), tr("por prioridad", "by priority")) {
             RoundBtn("+") {
-                val p = Project(System.currentTimeMillis(), "Nuevo", 2, 0, state.projects.size % LOOKS.size)
+                val p = Project(System.currentTimeMillis(), tr("Nuevo", "New"), 2, 0, state.projects.size % LOOKS.size)
                 state.upsert(p)
                 open = p.id
             }
@@ -62,7 +63,7 @@ fun ProyectosScreen(state: AppState, onLog: () -> Unit, onClaude: (Project) -> U
         }
         if (state.projects.isEmpty()) {
             Gap(60)
-            T("todavía no hay proyectos.\ntoca + para añadir el primero", 27, Modifier.fillMaxWidth(), color = Color(0xFF8D8D9B), align = TextAlign.Center)
+            T(tr("todavía no hay proyectos.\ntoca + para añadir el primero", "no projects yet.\ntap + to add the first one"), 27, Modifier.fillMaxWidth(), color = Color(0xFF8D8D9B), align = TextAlign.Center)
         }
     }
     val current = state.projects.firstOrNull { it.id == open }
@@ -87,8 +88,8 @@ fun ProjectCard(rank: Int, p: Project, lost: Int, real: Int, onClick: () -> Unit
             .tap(onClick = onClick),
     ) {
         Image(bmp, null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
-        Chip("#$rank · ${fmtH(real)} de ${p.hoursPerWeek} h", Color.White.copy(alpha = .2f), Modifier.align(Alignment.TopStart))
-        Chip("+$lost h perdidas", Color(0x800A0A0E), Modifier.align(Alignment.TopEnd))
+        Chip("#$rank · ${fmtH(real)} ${tr("de", "of")} ${p.hoursPerWeek} h", Color.White.copy(alpha = .2f), Modifier.align(Alignment.TopStart))
+        Chip("+$lost h ${tr("perdidas", "lost")}", Color(0x800A0A0E), Modifier.align(Alignment.TopEnd))
 
         // el nombre ocupa todo el ancho, como en el video (maximo 200px)
         val measurer = rememberTextMeasurer()

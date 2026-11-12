@@ -30,6 +30,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import com.iagodf.wakeup.data.AppState
 import com.iagodf.wakeup.data.Project
+import com.iagodf.wakeup.data.tr
 import com.iagodf.wakeup.data.fmtH
 import com.iagodf.wakeup.ui.C
 import com.iagodf.wakeup.ui.Field
@@ -51,19 +52,19 @@ fun ProjectSheet(state: AppState, p: Project, onClose: () -> Unit, onLog: () -> 
     var name by remember(p.id) { mutableStateOf(p.name) }
     var confirm by remember { mutableStateOf(false) }
     Sheet(onClose) {
-        SheetTitle(p.name.ifBlank { "Proyecto" }, "#$rank de ${state.projects.size}")
-        Field(name, { name = it.take(18); state.upsert(p.copy(name = name.trim())) }, "nombre")
+        SheetTitle(p.name.ifBlank { tr("Proyecto", "Project") }, "#$rank ${tr("de", "of")} ${state.projects.size}")
+        Field(name, { name = it.take(18); state.upsert(p.copy(name = name.trim())) }, tr("nombre", "name"))
         Gap(16)
 
-        Stepper("Horas por semana", "${p.hoursPerWeek} h", "lo que le quiero dedicar",
+        Stepper(tr("Horas por semana", "Hours per week"), "${p.hoursPerWeek} h", tr("lo que le quiero dedicar", "what I want to give it"),
             onMinus = { state.upsert(p.copy(hoursPerWeek = (p.hoursPerWeek - 1).coerceAtLeast(1))) },
             onPlus = { state.upsert(p.copy(hoursPerWeek = (p.hoursPerWeek + 1).coerceAtMost(60))) })
 
         // prioridad: subir o bajar en la lista
         Row(Modifier.fillMaxWidth().padding(vertical = u.dp(15)), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                T("Prioridad", 28, weight = 500)
-                T("el orden en que reparto las horas", 21, color = C.Muted, weight = 400)
+                T(tr("Prioridad", "Priority"), 28, weight = 500)
+                T(tr("el orden en que reparto las horas", "the order the hours are handed out"), 21, color = C.Muted, weight = 400)
             }
             RoundBtn("↓", size = 66) { state.move(p.id, 1) }
             T("#$rank", 32, Modifier.width(u.dp(132)), weight = 650, align = TextAlign.Center, maxLines = 1)
@@ -74,18 +75,18 @@ fun ProjectSheet(state: AppState, p: Project, onClose: () -> Unit, onLog: () -> 
         // horas reales de la semana: lo apuntado en mi dia menos el rato de movil
         val real = state.weekReal(p.id)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Kicker("Esta semana")
-            T("${fmtH(real)} de ${p.hoursPerWeek} h", 23, weight = 650)
+            Kicker(tr("Esta semana", "This week"))
+            T("${fmtH(real)} ${tr("de", "of")} ${p.hoursPerWeek} h", 23, weight = 650)
         }
         Gap(14)
         WeekBar(real / (p.hoursPerWeek * 60f))
         Gap(12)
-        T("horas reales: lo que apuntas en mi día menos el rato de móvil", 21, color = C.Muted, weight = 400)
+        T(tr("horas reales: lo que apuntas en mi día menos el rato de móvil", "real hours: what you log in my day minus the phone time"), 21, color = C.Muted, weight = 400)
         Gap(18)
-        PillButton("Apuntar horas", onClick = onLog)
+        PillButton(tr("Apuntar horas", "Log hours"), onClick = onLog)
 
         Gap(30)
-        Kicker("Paisaje")
+        Kicker(tr("Paisaje", "Landscape"))
         Gap(14)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(u.dp(12))) {
             LOOKS.forEachIndexed { i, look ->
@@ -106,13 +107,13 @@ fun ProjectSheet(state: AppState, p: Project, onClose: () -> Unit, onLog: () -> 
 
         Gap(34)
         PillButton(
-            "Desarrollar con Claude",
+            tr("Desarrollar con Claude", "Build with Claude"),
             brush = Brush.linearGradient(listOf(Color(0xFF8F63FF), Color(0xFF5A3DF0))),
             color = Color.White, glow = Color(0xFF8F63FF), onClick = onClaude,
         )
         Gap(22)
         T(
-            if (confirm) "toca otra vez para eliminarlo" else "Eliminar proyecto", 23,
+            if (confirm) tr("toca otra vez para eliminarlo", "tap again to delete it") else tr("Eliminar proyecto", "Delete project"), 23,
             Modifier.fillMaxWidth().tap { if (confirm) { state.delete(p.id); onClose() } else confirm = true }.padding(vertical = u.dp(10)),
             color = Color(0xFFFF6B6B), weight = 600, align = TextAlign.Center,
         )

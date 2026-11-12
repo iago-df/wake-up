@@ -23,8 +23,8 @@
 </p>
 
 > [!NOTE]
-> The images on this page come from the promo video: an English mock-up with sample data.
-> The app itself is the same design, but its interface is currently in Spanish.
+> The images on this page come from the promo video: a mock-up of the app with sample data.
+> The app comes in English (default) and Spanish; switch it in settings.
 
 ## Why
 
@@ -109,7 +109,7 @@ The APK is written to `app/build/outputs/apk/debug/`. It runs on Android 9 and n
 
 1. Install the APK and open the app.
 2. Tap the red card and turn on **usage access** for wake up. Without it the app cannot read screen time or unlocks.
-3. Long press your home screen, open Widgets and add **wake up** (4x2) or **wake up · pequeño** (2x2).
+3. Long press your home screen, open Widgets and add **wake up** (4x2) or **wake up · small** (2x2).
 
 ### Your timetable
 
@@ -181,7 +181,6 @@ docs/     images for this page
 
 Built for personal use and tested on an emulator and one phone. Known gaps:
 
-- The interface is in Spanish only.
 - The timetable is edited in code, not in the app.
 - Sending real orders to Claude from the app has not been tested end to end yet.
 - There are only debug builds, and no license has been chosen yet.

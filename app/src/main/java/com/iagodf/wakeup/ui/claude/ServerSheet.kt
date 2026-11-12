@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import com.iagodf.wakeup.data.AppState
+import com.iagodf.wakeup.data.tr
 import com.iagodf.wakeup.data.ClaudeModel
 import com.iagodf.wakeup.data.ServerCfg
 import com.iagodf.wakeup.ui.C
@@ -40,10 +41,10 @@ fun ServerSheet(state: AppState, model: ClaudeModel, onClose: () -> Unit) {
     var busy by remember { mutableStateOf(false) }
 
     Sheet(onClose) {
-        SheetTitle("Tu servidor", "el PC donde corre Claude Code")
-        Kicker("Nombre")
+        SheetTitle(tr("Tu servidor", "Your server"), tr("el PC donde corre Claude Code", "the PC where Claude Code runs"))
+        Kicker(tr("Nombre", "Name"))
         Gap(12)
-        Field(name, { name = it.take(20) }, "PC de casa")
+        Field(name, { name = it.take(20) }, tr("PC de casa", "Home PC"))
         Gap(22)
         Kicker("Url")
         Gap(12)
@@ -51,18 +52,18 @@ fun ServerSheet(state: AppState, model: ClaudeModel, onClose: () -> Unit) {
         Gap(22)
         Kicker("Token")
         Gap(12)
-        Field(token, { token = it.trim() }, "el que imprime el servidor al arrancar", mono = true, keyboard = KeyboardType.Password, secret = true, size = 24)
+        Field(token, { token = it.trim() }, tr("el que imprime el servidor al arrancar", "the one the server prints on start"), mono = true, keyboard = KeyboardType.Password, secret = true, size = 24)
 
         Gap(18)
         val m = msg
         T(
-            m?.second ?: "arranca server/wakeup_server.py en tu PC. lo mejor es llegar por Tailscale, no lo abras a internet.", 22,
+            m?.second ?: tr("arranca server/wakeup_server.py en tu PC. lo mejor es llegar por Tailscale, no lo abras a internet.", "start server/wakeup_server.py on your PC. best reached over Tailscale, don't expose it to the internet."), 22,
             color = when { m == null -> C.Muted; m.first -> C.Green; else -> Color(0xFFFF6B6B) }, weight = 500, lh = 1.35f,
         )
 
         Gap(26)
         PillButton(
-            if (busy) "Probando…" else "Probar y guardar",
+            if (busy) tr("Probando…", "Testing…") else tr("Probar y guardar", "Test and save"),
             brush = Brush.linearGradient(listOf(Color(0xFF8F63FF), Color(0xFF5A3DF0))),
             color = Color.White, glow = Color(0xFF8F63FF),
         ) {
@@ -74,16 +75,16 @@ fun ServerSheet(state: AppState, model: ClaudeModel, onClose: () -> Unit) {
                     .onSuccess {
                         state.update(cfg.copy(name = cfg.name.ifBlank { it }))
                         model.refresh()
-                        msg = true to "conectado a ${cfg.name.ifBlank { it }}"
+                        msg = true to "${tr("conectado a", "connected to")} ${cfg.name.ifBlank { it }}"
                     }
-                    .onFailure { msg = false to (it.message ?: "no se pudo conectar") }
+                    .onFailure { msg = false to (it.message ?: tr("no se pudo conectar", "could not connect")) }
                 busy = false
             }
         }
         if (state.server.ready) {
             Gap(22)
             T(
-                "Olvidar servidor", 23,
+                tr("Olvidar servidor", "Forget server"), 23,
                 Modifier.fillMaxWidth().tap { state.update(ServerCfg()); model.forget(); onClose() }.padding(vertical = u.dp(10)),
                 color = Color(0xFFFF6B6B), weight = 600, align = TextAlign.Center,
             )
