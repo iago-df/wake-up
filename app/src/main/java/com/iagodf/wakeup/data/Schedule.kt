@@ -14,7 +14,9 @@ data class Block(val day: Int, val start: LocalTime, val code: String, val room:
     }
 }
 
-class Semester(val name: String, val from: LocalDate, val to: LocalDate, val blocks: List<Block>)
+class Semester(private val es: String, private val en: String, val from: LocalDate, val to: LocalDate, val blocks: List<Block>) {
+    val name: String get() = tr(es, en)
+}
 
 object Schedule {
     private fun b(day: Int, start: String, code: String, room: String) = Block(day, LocalTime.parse(start), code, room)
@@ -75,9 +77,9 @@ object Schedule {
     )
 
     val semesters = listOf(
-        Semester("1º cuatrimestre", LocalDate.of(2026, 9, 7), LocalDate.of(2026, 12, 19), c1),
+        Semester("1º cuatrimestre", "1st semester", LocalDate.of(2026, 9, 7), LocalDate.of(2026, 12, 19), c1),
         // el segundo acaba en junio, no se el dia exacto
-        Semester("2º cuatrimestre", LocalDate.of(2027, 1, 6), LocalDate.of(2027, 6, 30), c2),
+        Semester("2º cuatrimestre", "2nd semester", LocalDate.of(2027, 1, 6), LocalDate.of(2027, 6, 30), c2),
     )
 
     fun semesterOn(date: LocalDate): Semester? = semesters.firstOrNull { !date.isBefore(it.from) && !date.isAfter(it.to) }
