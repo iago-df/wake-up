@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/img"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@string/app_name"
+        android:scaleType="fitXY" />
+
+    <!-- la hora va aparte para que cambie cada minuto sin redibujar todo -->
+    <TextClock
+        android:id="@+id/clock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:format12Hour="'HOY · 'HH:mm"
+        android:format24Hour="'HOY · 'HH:mm"
+        android:letterSpacing="0.16"
+        android:textColor="#B9B9C8"
+        android:textSize="11sp" />
+</FrameLayout>

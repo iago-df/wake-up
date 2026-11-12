@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.iagodf.wakeup.data.AppState
@@ -50,6 +51,7 @@ import com.iagodf.wakeup.ui.claude.ClaudeScreen
 import com.iagodf.wakeup.ui.clases.CalendarScreen
 import com.iagodf.wakeup.ui.proyectos.ProyectosScreen
 import com.iagodf.wakeup.ui.tiempo.TiempoScreen
+import com.iagodf.wakeup.widget.WakeWidget
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -72,13 +74,14 @@ class MainActivity : ComponentActivity() {
 fun App(state: AppState) {
     val u = LocalU.current
     val scope = rememberCoroutineScope()
+    val ctx = LocalContext.current.applicationContext
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var calendar by rememberSaveable { mutableStateOf(false) }
     val claude = remember { ClaudeModel(state, scope) }
 
     // refrescar el uso al volver a la app y cada minuto mientras esta abierta
     LifecycleResumeEffect(Unit) {
-        scope.launch { state.refresh() }
+        scope.launch { state.refresh(); WakeWidget.render(ctx, state) }
         onPauseOrDispose { }
     }
     LaunchedEffect(Unit) {
