@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.iagodf.wakeup.data.AppState
+import com.iagodf.wakeup.data.tr
 import com.iagodf.wakeup.data.Bubble
 import com.iagodf.wakeup.data.ClaudeModel
 import com.iagodf.wakeup.data.Session
@@ -95,9 +96,9 @@ fun ClaudeScreen(state: AppState, model: ClaudeModel) {
             Header(
                 "Claude",
                 when {
-                    !cfg.ready -> "conecta tu servidor"
+                    !cfg.ready -> tr("conecta tu servidor", "connect your server")
                     model.error != null -> model.error!!
-                    else -> "tu PC, en directo"
+                    else -> tr("tu PC, en directo", "your PC, live")
                 },
             ) {
                 // chip con el nombre del servidor
@@ -112,7 +113,7 @@ fun ClaudeScreen(state: AppState, model: ClaudeModel) {
                     }
                     Dot(col)
                     T(
-                        if (!cfg.ready) "Conectar" else cfg.name.ifBlank { usage?.name ?: "Servidor" },
+                        if (!cfg.ready) tr("Conectar", "Connect") else cfg.name.ifBlank { usage?.name ?: tr("Servidor", "Server") },
                         22, color = col, weight = 600, maxLines = 1,
                     )
                 }
@@ -124,17 +125,17 @@ fun ClaudeScreen(state: AppState, model: ClaudeModel) {
             Gap(22)
             Panel(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(horizontal = u.dp(34), vertical = u.dp(32))) {
-                    Kicker("Sesiones en tu PC")
+                    Kicker(tr("Sesiones en tu PC", "Sessions on your PC"))
                     Gap(14)
                     val sessions = usage?.sessions ?: emptyList()
                     when {
                         !cfg.ready -> {
-                            T("todavía no hay ningún servidor conectado. arranca wakeup_server.py en tu PC y pon aquí su url y su token.", 24, color = C.Muted, weight = 400, lh = 1.35f)
+                            T(tr("todavía no hay ningún servidor conectado. arranca wakeup_server.py en tu PC y pon aquí su url y su token.", "no server connected yet. start wakeup_server.py on your PC and enter its url and token here."), 24, color = C.Muted, weight = 400, lh = 1.35f)
                             Gap(24)
-                            PillButton("Conectar servidor", brush = Brush.linearGradient(listOf(VIOLET, Color(0xFF5A3DF0))), color = Color.White) { sheet = true }
+                            PillButton(tr("Conectar servidor", "Connect server"), brush = Brush.linearGradient(listOf(VIOLET, Color(0xFF5A3DF0))), color = Color.White) { sheet = true }
                         }
                         sessions.isEmpty() -> T(
-                            if (model.error != null) "no hay conexión con el servidor" else "sin sesiones esta semana", 24,
+                            if (model.error != null) tr("no hay conexión con el servidor", "can't reach the server") else tr("sin sesiones esta semana", "no sessions this week"), 24,
                             Modifier.padding(vertical = u.dp(10)), color = C.Muted,
                         )
                     }
@@ -153,7 +154,7 @@ fun ClaudeScreen(state: AppState, model: ClaudeModel) {
         InputBar(
             value = model.draft,
             onChange = { model.draft = it },
-            hint = if (target != null) "Orden para ${target.title}" else "Escribe una orden…",
+            hint = if (target != null) "${tr("Orden para", "Order for")} ${target.title}" else tr("Escribe una orden…", "Type an order…"),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(start = u.dp(30), end = u.dp(30), bottom = if (typing) ime + u.dp(20) else nav + u.dp(168)),
@@ -183,7 +184,7 @@ private fun Tokens(week: Long?, days: List<Long>) {
     val u = LocalU.current
     GlowCard(Pals.P, Modifier.fillMaxWidth().height(u.dp(330))) {
         Column(Modifier.padding(horizontal = u.dp(40), vertical = u.dp(36))) {
-            T("TOKENS · ESTA SEMANA", 21, color = C.Soft, weight = 600, ls = 5, maxLines = 1)
+            T(tr("TOKENS · ESTA SEMANA", "TOKENS · THIS WEEK"), 21, color = C.Soft, weight = 600, ls = 5, maxLines = 1)
             T(if (week != null) fmtTokens(week) else "0", 132, weight = 600, ls = -6, lh = 1.06f, maxLines = 1)
         }
         // una barra por dia, la mas alta en blanco
@@ -222,7 +223,7 @@ private fun SessionRow(s: Session, selected: Boolean, onClick: () -> Unit) {
                 if (s.active) Dot(C.Green)
                 T(s.title, 28, color = if (selected) Color(0xFFB79CFF) else Color.White, weight = 600, maxLines = 1)
             }
-            T(if (selected) "${s.project} · las órdenes van aquí" else s.project, 22, color = C.Muted, weight = 400, maxLines = 1)
+            T(if (selected) "${s.project} · ${tr("las órdenes van aquí", "orders go here")}" else s.project, 22, color = C.Muted, weight = 400, maxLines = 1)
         }
         T(fmtTokens(s.tokens), 24, color = Color(0xFFD6D6E2), weight = 600, family = Mono, maxLines = 1)
     }

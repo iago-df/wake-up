@@ -34,6 +34,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import com.iagodf.wakeup.data.AppState
+import com.iagodf.wakeup.data.Lang
+import com.iagodf.wakeup.data.tr
 import com.iagodf.wakeup.data.Project
 import com.iagodf.wakeup.data.SLOTS_PER_DAY
 import com.iagodf.wakeup.data.SLOT_MIN
@@ -57,7 +59,7 @@ import java.util.Locale
 /** pincel especial: marca que en ese tramo el movil era para el proyecto y no resta */
 private const val PHONE_OK = -2L
 private const val FIRST_SLOT = 14 // 07:00
-private val DAY = DateTimeFormatter.ofPattern("EEEE d MMM", Locale.forLanguageTag("es"))
+private val DAY: DateTimeFormatter get() = DateTimeFormatter.ofPattern("EEEE d MMM", Lang.locale)
 
 /**
  * mi dia: el dia en tramos de media hora. las clases a las que fui salen rellenas,
@@ -78,7 +80,7 @@ fun ColumnScope.DayLog(state: AppState) {
         Box(
             Modifier.weight(1f).padding(horizontal = u.dp(14)).height(u.dp(78)).glass(CircleShape).tap { back = 0 },
             contentAlignment = Alignment.Center,
-        ) { T(if (back == 0) "hoy · ${date.format(DAY)}" else date.format(DAY), 25, weight = 600, maxLines = 1) }
+        ) { T(if (back == 0) "${tr("hoy", "today")} · ${date.format(DAY).lowercase()}" else date.format(DAY).lowercase(), 25, weight = 600, maxLines = 1) }
         RoundBtn("›", size = 78) { if (back > 0) back-- }
     }
 
@@ -86,22 +88,22 @@ fun ColumnScope.DayLog(state: AppState) {
     Gap(18)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(u.dp(14))) {
         Mini("REAL", fmtH(state.dayReal(date)), Pals.G, Modifier.weight(1f))
-        Mini("MÓVIL", fmtH(state.phoneMinutes(date)), Pals.O, Modifier.weight(1f))
-        Mini("CLASES", fmtH(state.classMinutes(date)), Pals.B, Modifier.weight(1f))
+        Mini(tr("MÓVIL", "PHONE"), fmtH(state.phoneMinutes(date)), Pals.O, Modifier.weight(1f))
+        Mini(tr("CLASES", "CLASSES"), fmtH(state.classMinutes(date)), Pals.B, Modifier.weight(1f))
     }
 
     // con que pinto
     Gap(18)
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(u.dp(10))) {
         state.projects.forEach { p -> BrushChip(p.name, lookColor(p.look), brush == p.id) { brush = p.id } }
-        BrushChip("Móvil ✓", C.Orange, brush == PHONE_OK) { brush = PHONE_OK }
+        BrushChip(tr("Móvil ✓", "Phone ✓"), C.Orange, brush == PHONE_OK) { brush = PHONE_OK }
     }
     Gap(10)
     T(
         when {
-            state.projects.isEmpty() -> "crea un proyecto para poder apuntar"
-            brush == PHONE_OK -> "toca un tramo apuntado si el móvil era para el proyecto: no le resta"
-            else -> "toca los tramos en los que estuviste con esto. otra vez para borrar"
+            state.projects.isEmpty() -> tr("crea un proyecto para poder apuntar", "create a project to start logging")
+            brush == PHONE_OK -> tr("toca un tramo apuntado si el móvil era para el proyecto: no le resta", "tap a logged slot if the phone was for the project: it won't count")
+            else -> tr("toca los tramos en los que estuviste con esto. otra vez para borrar", "tap the slots where you worked on this. tap again to erase")
         },
         20, color = C.Muted, weight = 400, maxLines = 1,
     )
@@ -187,8 +189,8 @@ private fun SlotRow(state: AppState, date: LocalDate, slot: Int, brush: Long) {
                     val fg = if (went) Color(0xFF07070A) else Color.White.copy(alpha = .6f)
                     T("${cls.code} · ${cls.room}", 23, Modifier.weight(1f), color = fg, weight = 800, maxLines = 1)
                     when {
-                        !went -> T("luego", 19, color = fg, weight = 500)
-                        phone > 0 -> T("$phone min móvil", 19, color = Color(0xFFB3261E), weight = 700)
+                        !went -> T(tr("luego", "later"), 19, color = fg, weight = 500)
+                        phone > 0 -> T("$phone min ${tr("móvil", "phone")}", 19, color = Color(0xFFB3261E), weight = 700)
                     }
                 }
             }
@@ -212,8 +214,8 @@ private fun SlotRow(state: AppState, date: LocalDate, slot: Int, brush: Long) {
                         T(
                             when {
                                 elapsed == 0 -> ""
-                                ok -> "${state.slotReal(date, slot)} min · móvil ✓"
-                                lost > 0 -> "${state.slotReal(date, slot)} min · −$lost móvil"
+                                ok -> "${state.slotReal(date, slot)} min · ${tr("móvil", "phone")} ✓"
+                                lost > 0 -> "${state.slotReal(date, slot)} min · −$lost ${tr("móvil", "phone")}"
                                 else -> "${state.slotReal(date, slot)} min"
                             },
                             19, weight = 650, maxLines = 1,
@@ -230,7 +232,7 @@ private fun SlotRow(state: AppState, date: LocalDate, slot: Int, brush: Long) {
                 ) {
                     if (phone > 0) {
                         Box(Modifier.fillMaxHeight().fillMaxWidth(phone / SLOT_MIN.toFloat()).background(C.Orange.copy(alpha = .22f)))
-                        T("$phone min de móvil", 20, Modifier.align(Alignment.CenterStart).padding(start = u.dp(22)), color = C.OrangeSoft, weight = 600, maxLines = 1)
+                        T("$phone min ${tr("de móvil", "of phone")}", 20, Modifier.align(Alignment.CenterStart).padding(start = u.dp(22)), color = C.OrangeSoft, weight = 600, maxLines = 1)
                     }
                 }
             }

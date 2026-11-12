@@ -24,6 +24,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.iagodf.wakeup.data.AppState
+import com.iagodf.wakeup.data.Lang
+import com.iagodf.wakeup.data.tr
+import com.iagodf.wakeup.widget.WakeWidget
 import com.iagodf.wakeup.data.fmtH
 import com.iagodf.wakeup.ui.C
 import com.iagodf.wakeup.ui.Gap
@@ -50,22 +53,32 @@ fun SettingsSheet(state: AppState, onClose: () -> Unit) {
     val ctx = LocalContext.current
     val s = state.settings
     Sheet(onClose) {
-        SheetTitle("Tu día", "lo que no es tiempo libre")
-        Stepper("Sueño", h(s.sleepH),
+        SheetTitle(tr("Ajustes", "Settings"), tr("tu día, tu vida y el widget", "your day, your life and the widget"))
+        Kicker(tr("Idioma", "Language"))
+        Gap(12)
+        Segmented(listOf("English", "Español"), if (Lang.en) 0 else 1) {
+            Lang.set(ctx, it == 0)
+            WakeWidget.render(ctx.applicationContext, state)
+        }
+        Gap(34)
+        Kicker(tr("Tu día", "Your day"))
+        T(tr("lo que no es tiempo libre", "what isn't free time"), 21, color = C.Muted, weight = 400)
+        Gap(4)
+        Stepper(tr("Sueño", "Sleep"), h(s.sleepH),
             onMinus = { state.update(s.copy(sleepH = (s.sleepH - .5f).coerceAtLeast(3f))) },
             onPlus = { state.update(s.copy(sleepH = (s.sleepH + .5f).coerceAtMost(12f))) })
-        Stepper("Tareas básicas", h(s.basicsH), "ducha, transporte, recados",
+        Stepper(tr("Tareas básicas", "Chores"), h(s.basicsH), tr("ducha, transporte, recados", "shower, commute, errands"),
             onMinus = { state.update(s.copy(basicsH = (s.basicsH - .5f).coerceAtLeast(0f))) },
             onPlus = { state.update(s.copy(basicsH = (s.basicsH + .5f).coerceAtMost(8f))) })
-        Stepper("Comidas", h(s.mealsH),
+        Stepper(tr("Comidas", "Meals"), h(s.mealsH),
             onMinus = { state.update(s.copy(mealsH = (s.mealsH - .5f).coerceAtLeast(0f))) },
             onPlus = { state.update(s.copy(mealsH = (s.mealsH + .5f).coerceAtMost(6f))) })
         Gap(10)
-        T("un día sin clases te deja ${fmtH(24 * 60 - s.busyMinutes)} libres", 23, color = C.OrangeSoft, weight = 500)
+        T(tr("un día sin clases te deja ${fmtH(24 * 60 - s.busyMinutes)} libres", "a day without classes leaves you ${fmtH(24 * 60 - s.busyMinutes)} free"), 23, color = C.OrangeSoft, weight = 500)
 
         Gap(34)
-        Kicker("Tu vida")
-        Stepper("Año de nacimiento", s.birthYear.toString(), "para calcular los años de pantalla",
+        Kicker(tr("Tu vida", "Your life"))
+        Stepper(tr("Año de nacimiento", "Birth year"), s.birthYear.toString(), tr("para calcular los años de pantalla", "to work out your years of screen"),
             onMinus = { state.update(s.copy(birthYear = (s.birthYear - 1).coerceAtLeast(1940))) },
             onPlus = { state.update(s.copy(birthYear = (s.birthYear + 1).coerceAtMost(2020))) })
 
@@ -77,7 +90,7 @@ fun SettingsSheet(state: AppState, onClose: () -> Unit) {
         if (!state.hasAccess) {
             Gap(30)
             PillButton(
-                "Dar acceso al uso del móvil",
+                tr("Dar acceso al uso del móvil", "Give usage access"),
                 brush = Brush.linearGradient(listOf(Pals.O.c1, Pals.O.c2)),
                 color = Color.White, glow = Pals.O.c1,
             ) { openUsageAccess(ctx) }
@@ -86,7 +99,8 @@ fun SettingsSheet(state: AppState, onClose: () -> Unit) {
     }
 }
 
-private val MOMENTS = listOf("Amanecer" to 7.5f, "Día" to 13f, "Atardecer" to 19.6f, "Noche" to 23f)
+private val MOMENTS: List<Pair<String, Float>>
+    get() = listOf(tr("Amanecer", "Sunrise") to 7.5f, tr("Día", "Day") to 13f, tr("Atardecer", "Sunset") to 19.6f, tr("Noche", "Night") to 23f)
 
 /** como se ve el widget ahora mismo, y en cada momento del dia */
 @Composable
@@ -99,8 +113,8 @@ private fun WidgetPreview(state: AppState) {
     val pct = state.pct(state.today)
     val min = state.phoneMinutes(state.today)
     // el grande (4x2) y el pequeño (2x2)
-    val big = remember(hour, pct, min) { Scene.render(ctx, 820, 400, pct, min, hour).asImageBitmap() }
-    val small = remember(hour, pct, min) { Scene.render(ctx, 400, 400, pct, min, hour).asImageBitmap() }
+    val big = remember(hour, pct, min, Lang.en) { Scene.render(ctx, 820, 400, pct, min, hour).asImageBitmap() }
+    val small = remember(hour, pct, min, Lang.en) { Scene.render(ctx, 400, 400, pct, min, hour).asImageBitmap() }
     Row(Modifier.fillMaxWidth().height(u.dp(214)), horizontalArrangement = Arrangement.spacedBy(u.dp(14))) {
         Image(big, null, Modifier.weight(820f).fillMaxHeight(), contentScale = ContentScale.FillBounds)
         Image(small, null, Modifier.weight(400f).fillMaxHeight(), contentScale = ContentScale.FillBounds)
@@ -116,5 +130,5 @@ private fun WidgetPreview(state: AppState) {
         }
     }
     Gap(12)
-    T("añádelo desde la pantalla de inicio: mantén pulsado > widgets > wake up. hay uno grande y uno pequeño", 21, color = C.Muted, weight = 400, lh = 1.35f)
+    T(tr("añádelo desde la pantalla de inicio: mantén pulsado > widgets > wake up. hay uno grande y uno pequeño", "add it from your home screen: long press > widgets > wake up. there is a big one and a small one"), 21, color = C.Muted, weight = 400, lh = 1.35f)
 }

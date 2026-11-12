@@ -38,6 +38,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.iagodf.wakeup.data.AppState
+import com.iagodf.wakeup.data.Lang
+import com.iagodf.wakeup.data.tr
 import com.iagodf.wakeup.data.Block
 import com.iagodf.wakeup.data.Schedule
 import com.iagodf.wakeup.ui.C
@@ -55,8 +57,10 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.temporal.TemporalAdjusters
 
-private val MONTHS = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
-private val DAYS = listOf("L", "M", "X", "J", "V")
+private val MONTHS_ES = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
+private val MONTHS_EN = listOf("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
+private val MONTHS: List<String> get() = if (Lang.en) MONTHS_EN else MONTHS_ES
+private val DAYS: List<String> get() = if (Lang.en) listOf("M", "T", "W", "T", "F") else listOf("L", "M", "X", "J", "V")
 
 // el horario oficial va de 08:30 a 14:30 y de 15:30 a 19:30, en filas de media hora
 private val MORNING = LocalTime.of(8, 30)
@@ -96,11 +100,11 @@ fun CalendarScreen(state: AppState, startTab: Int, onClose: () -> Unit) {
             .padding(start = u.dp(34), end = u.dp(34), top = u.dp(18), bottom = u.dp(26)),
     ) {
         Header(
-            if (tab == 0) "Clases" else "Mi día",
-            if (tab == 0) (semester?.name ?: "sin clases") else "lo que hiciste de verdad",
+            if (tab == 0) tr("Clases", "Classes") else tr("Mi día", "My day"),
+            if (tab == 0) (semester?.name ?: tr("sin clases", "no classes")) else tr("lo que hiciste de verdad", "what you really did"),
         ) { RoundBtn("✕", onClick = onClose) }
         Gap(22)
-        Segmented(listOf("Clases", "Mi día"), tab) { tab = it }
+        Segmented(listOf(tr("Clases", "Classes"), tr("Mi día", "My day")), tab) { tab = it }
         Gap(22)
         if (tab == 0) WeekGrid(state, monday, offset) { offset = it } else DayLog(state)
     }
@@ -123,7 +127,7 @@ private fun ColumnScope.WeekGrid(state: AppState, monday: LocalDate, offset: Int
         ) {
             val range = if (monday.month == friday.month) "${monday.dayOfMonth} – ${friday.dayOfMonth} ${MONTHS[friday.monthValue - 1]}"
             else "${monday.dayOfMonth} ${MONTHS[monday.monthValue - 1]} – ${friday.dayOfMonth} ${MONTHS[friday.monthValue - 1]}"
-            T(if (offset == 0) "esta semana · $range" else range, 25, weight = 600, maxLines = 1)
+            T(if (offset == 0) "${tr("esta semana", "this week")} · $range" else range, 25, weight = 600, maxLines = 1)
         }
         RoundBtn("›", size = 78) { setOffset(offset + 1) }
     }
@@ -158,7 +162,7 @@ private fun ColumnScope.WeekGrid(state: AppState, monday: LocalDate, offset: Int
 
         if (blocks.isEmpty()) {
             T(
-                "esta semana no hay clases", 27, Modifier.align(Alignment.Center).padding(start = timeW),
+                tr("esta semana no hay clases", "no classes this week"), 27, Modifier.align(Alignment.Center).padding(start = timeW),
                 color = C.Muted, weight = 500, align = TextAlign.Center,
             )
         }
@@ -177,11 +181,11 @@ private fun ColumnScope.WeekGrid(state: AppState, monday: LocalDate, offset: Int
     Gap(18)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Legend(true); T("  fui", 21, color = C.Soft, weight = 500)
+            Legend(true); T("  " + tr("fui", "went"), 21, color = C.Soft, weight = 500)
             Box(Modifier.width(u.dp(26)))
-            Legend(false); T("  no fui", 21, color = C.Soft, weight = 500)
+            Legend(false); T("  " + tr("no fui", "skipped"), 21, color = C.Soft, weight = 500)
         }
-        if (blocks.isNotEmpty()) T("$went de ${blocks.size} h", 23, weight = 650, family = Mono)
+        if (blocks.isNotEmpty()) T("$went ${tr("de", "of")} ${blocks.size} h", 23, weight = 650, family = Mono)
     }
 }
 

@@ -46,6 +46,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import com.iagodf.wakeup.data.AppState
+import com.iagodf.wakeup.data.Lang
+import com.iagodf.wakeup.data.fmtDec
+import com.iagodf.wakeup.data.tr
 import com.iagodf.wakeup.data.Block
 import com.iagodf.wakeup.data.Schedule
 import com.iagodf.wakeup.data.fmtH
@@ -71,7 +74,9 @@ import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
-private val DATE = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", Locale.forLanguageTag("es"))
+private val DATE: DateTimeFormatter
+    get() = if (Lang.en) DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.ENGLISH)
+    else DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", Locale.forLanguageTag("es"))
 
 private data class HeroData(val kicker: String, val big: String, val label: String, val sub: String, val pal: Pal, val lit: Int, val small: Boolean = false)
 
@@ -85,34 +90,34 @@ fun TiempoScreen(state: AppState, onCalendar: () -> Unit, onDay: () -> Unit) {
 
     val hero = when (range) {
         0 -> HeroData(
-            "TIEMPO LIBRE CONSUMIDO", "${state.pct(today)}%", "de tu tiempo libre de hoy",
-            "${fmtHM(state.phoneMinutes(today))} · ${state.unlocks(today)} ${if (state.unlocks(today) == 1) "desbloqueo" else "desbloqueos"}", Pals.O, state.pct(today) * 60 / 100,
+            tr("TIEMPO LIBRE CONSUMIDO", "FREE TIME CONSUMED"), "${state.pct(today)}%", tr("de tu tiempo libre de hoy", "of your free time today"),
+            "${fmtHM(state.phoneMinutes(today))} · ${state.unlocks(today)} ${if (state.unlocks(today) == 1) tr("desbloqueo", "unlock") else tr("desbloqueos", "unlocks")}", Pals.O, state.pct(today) * 60 / 100,
         )
         1 -> HeroData(
-            "ÚLTIMOS 7 DÍAS", "${state.weekPct}%", "de tu tiempo libre esta semana",
-            "${fmtHM(state.weekPhone)} de móvil", Pals.P, state.weekPct * 60 / 100,
+            tr("ÚLTIMOS 7 DÍAS", "LAST 7 DAYS"), "${state.weekPct}%", tr("de tu tiempo libre esta semana", "of your free time this week"),
+            "${fmtHM(state.weekPhone)} ${tr("de móvil", "on your phone")}", Pals.P, state.weekPct * 60 / 100,
         )
         else -> {
             val y = state.lifeYears
-            val txt = if (y >= 10f) y.roundToInt().toString() else ((y * 10).roundToInt() / 10f).toString().replace('.', ',').removeSuffix(",0")
+            val txt = if (y >= 10f) y.roundToInt().toString() else fmtDec(y)
             HeroData(
-                "TU VIDA", "$txt ${if (txt == "1") "año" else "años"}", "mirando una pantalla, a este ritmo",
-                "de aquí a los 80", Pals.R, (y / (80 - state.age).coerceAtLeast(1) * 60).roundToInt(), small = true,
+                tr("TU VIDA", "YOUR LIFE"), "$txt ${if (txt == "1") tr("año", "year") else tr("años", "years")}", tr("mirando una pantalla, a este ritmo", "staring at a screen, at this pace"),
+                tr("de aquí a los 80", "from now until you're 80"), Pals.R, (y / (80 - state.age).coerceAtLeast(1) * 60).roundToInt(), small = true,
             )
         }
     }
 
     ScreenColumn {
-        Header("Tiempo", today.format(DATE)) { RoundBtn("⚙") { settings = true } }
+        Header(tr("Tiempo", "Time"), today.format(DATE).lowercase()) { RoundBtn("⚙") { settings = true } }
         Gap(24)
-        Segmented(listOf("Hoy", "7 días", "Vida"), range) { range = it }
+        Segmented(listOf(tr("Hoy", "Today"), tr("7 días", "7 days"), tr("Vida", "Life")), range) { range = it }
 
         if (!state.hasAccess) {
             Gap(22)
             GlowCard(Pals.R, Modifier.fillMaxWidth().tap { openUsageAccess(ctx) }, radius = 42, cy = 1.3f) {
                 Column(Modifier.padding(horizontal = u.dp(34), vertical = u.dp(28))) {
-                    T("Falta un permiso", 30, weight = 650)
-                    T("toca aquí y activa el acceso de uso para wake up", 23, color = C.Text, weight = 500)
+                    T(tr("Falta un permiso", "Permission needed"), 30, weight = 650)
+                    T(tr("toca aquí y activa el acceso de uso para wake up", "tap here and turn on usage access for wake up"), 23, color = C.Text, weight = 500)
                 }
             }
         }
@@ -126,18 +131,18 @@ fun TiempoScreen(state: AppState, onCalendar: () -> Unit, onDay: () -> Unit) {
         val classes = if (week) state.weekClass else state.classMinutes(today)
         Gap(22)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(u.dp(22))) {
-            Stat("LIBRE REAL", hours(free.coerceAtLeast(0)), Pals.G, Modifier.weight(1f))
-            Stat("CLASES", hours(classes), Pals.B, Modifier.weight(1f))
+            Stat(tr("LIBRE REAL", "REAL FREE"), hours(free.coerceAtLeast(0)), Pals.G, Modifier.weight(1f))
+            Stat(tr("CLASES", "CLASSES"), hours(classes), Pals.B, Modifier.weight(1f))
         }
 
         // lo que pudo ser
         Gap(22)
         Panel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(horizontal = u.dp(34), vertical = u.dp(32))) {
-                Kicker("Lo que pudo ser · semana")
+                Kicker(tr("Lo que pudo ser · semana", "What could have been · week"))
                 Gap(14)
                 val lost = state.lostHours()
-                if (state.projects.isEmpty()) T("añade proyectos para ver a quién le quitas las horas", 24, color = C.Muted)
+                if (state.projects.isEmpty()) T(tr("añade proyectos para ver a quién le quitas las horas", "add projects to see who you take the hours from"), 24, color = C.Muted)
                 state.projects.forEach { p ->
                     Row(Modifier.fillMaxWidth().padding(vertical = u.dp(13)), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         T(p.name, 28, Modifier.weight(1f), weight = 500, maxLines = 1)
@@ -152,13 +157,13 @@ fun TiempoScreen(state: AppState, onCalendar: () -> Unit, onDay: () -> Unit) {
         Panel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(horizontal = u.dp(34), vertical = u.dp(32))) {
                 Row(Modifier.fillMaxWidth().tap(onClick = onCalendar), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Kicker("Horario · hoy")
-                    T("SEMANA ›", 21, color = Color.White, weight = 600, ls = 3)
+                    Kicker(tr("Horario · hoy", "Schedule · today"))
+                    T(tr("SEMANA ›", "WEEK ›"), 21, color = Color.White, weight = 600, ls = 3)
                 }
                 Gap(14)
                 val blocks = Schedule.blocksOn(today)
                 if (blocks.isEmpty()) {
-                    T("hoy no hay clases", 26, Modifier.padding(vertical = u.dp(10)), color = C.Muted, weight = 500)
+                    T(tr("hoy no hay clases", "no classes today"), 26, Modifier.padding(vertical = u.dp(10)), color = C.Muted, weight = 500)
                 }
                 blocks.forEachIndexed { i, b ->
                     if (i > 0) Box(Modifier.fillMaxWidth().height(u.dp(1.5)).background(C.Line))
@@ -172,13 +177,13 @@ fun TiempoScreen(state: AppState, onCalendar: () -> Unit, onDay: () -> Unit) {
         Panel(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(horizontal = u.dp(34), vertical = u.dp(32))) {
                 Row(Modifier.fillMaxWidth().tap(onClick = onDay), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Kicker("Mi día · real")
-                    T("APUNTAR ›", 21, color = Color.White, weight = 600, ls = 3)
+                    Kicker(tr("Mi día · real", "My day · real"))
+                    T(tr("APUNTAR ›", "LOG ›"), 21, color = Color.White, weight = 600, ls = 3)
                 }
                 Gap(14)
                 val done = state.projects.map { it to state.realMinutes(it.id, today) }.filter { it.second > 0 }
                 if (done.isEmpty()) {
-                    T("todavía no has apuntado nada hoy", 26, Modifier.fillMaxWidth().tap(onClick = onDay).padding(vertical = u.dp(10)), color = C.Muted, weight = 500)
+                    T(tr("todavía no has apuntado nada hoy", "nothing logged today yet"), 26, Modifier.fillMaxWidth().tap(onClick = onDay).padding(vertical = u.dp(10)), color = C.Muted, weight = 500)
                 }
                 done.forEach { (p, min) ->
                     Row(Modifier.fillMaxWidth().padding(vertical = u.dp(13)), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -209,9 +214,9 @@ private fun ClassRow(b: Block, state: AppState, onToggle: () -> Unit) {
             T("${b.start} – ${b.end} · ${b.room}", 22, color = C.Muted, weight = 400, maxLines = 1)
         }
         val (text, color) = when {
-            went -> "Fui" to C.Green
-            pending -> "Luego" to Color(0xFFB0B0BE)
-            else -> "No fui" to Color(0xFFFF6B6B)
+            went -> tr("Fui", "Went") to C.Green
+            pending -> tr("Luego", "Later") to Color(0xFFB0B0BE)
+            else -> tr("No fui", "Missed") to Color(0xFFFF6B6B)
         }
         val bg by animateColorAsState(color.copy(alpha = if (pending) .08f else .15f), label = "pill")
         Box(
@@ -253,7 +258,7 @@ private fun Hero(d: HeroData) {
                 Column {
                     T(h.kicker, 21, color = C.Soft, weight = 600, ls = 5, maxLines = 1)
                     Box(Modifier.height(u.dp(208)), contentAlignment = Alignment.CenterStart) {
-                        if (h.small) T(h.big, 150, weight = 600, ls = -8, lh = 1f, maxLines = 1)
+                        if (h.small) T(h.big, if (h.big.length <= 8) 150 else 150 * 8 / h.big.length, weight = 600, ls = -8, lh = 1f, maxLines = 1)
                         else T(h.big, 200, weight = 600, ls = -10, lh = 1f, maxLines = 1)
                     }
                     T(h.label, 28, color = C.Text, weight = 500, maxLines = 1)
