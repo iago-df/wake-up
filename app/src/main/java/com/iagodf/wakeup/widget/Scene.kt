@@ -12,6 +12,7 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import androidx.core.content.res.ResourcesCompat
 import com.iagodf.wakeup.R
+import com.iagodf.wakeup.data.tr
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -162,10 +163,10 @@ object Scene {
         p.fontVariationSettings = "'wght' 500"
         p.textSize = small
         p.letterSpacing = 0f
-        cv.drawText("de tu tiempo libre perdido", left, line1, p)
+        cv.drawText(tr("de tu tiempo libre perdido", "of your free time lost"), left, line1, p)
         p.color = Color.WHITE
         p.fontVariationSettings = "'wght' 650"
-        cv.drawText("${fmt(minutes)} con el móvil", left, line2, p)
+        cv.drawText("${fmt(minutes)} ${tr("con el móvil", "on your phone")}", left, line2, p)
         cv.restore()
 
         // borde fino

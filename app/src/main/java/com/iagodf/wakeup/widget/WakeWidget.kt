@@ -19,6 +19,7 @@ import androidx.work.WorkerParameters
 import com.iagodf.wakeup.MainActivity
 import com.iagodf.wakeup.R
 import com.iagodf.wakeup.data.AppState
+import com.iagodf.wakeup.data.tr
 import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 
@@ -75,6 +76,10 @@ open class WakeWidget : AppWidgetProvider() {
 
                 val views = RemoteViews(ctx.packageName, R.layout.widget)
                 views.setImageViewBitmap(R.id.img, Scene.render(ctx, w, h, pct, minutes, hour))
+                // la hora en directo, con HOY / TODAY segun el idioma
+                val clock = "'${tr("HOY", "TODAY")} · 'HH:mm"
+                views.setCharSequence(R.id.clock, "setFormat24Hour", clock)
+                views.setCharSequence(R.id.clock, "setFormat12Hour", clock)
                 views.setTextViewTextSize(R.id.clock, TypedValue.COMPLEX_UNIT_PX, (if (compact) 20 else 23) * s)
                 views.setViewPadding(R.id.clock, ((if (compact) 34 else 56) * s).toInt(), ((if (compact) 30 else 40) * s).toInt(), 0, 0)
                 val open = PendingIntent.getActivity(
