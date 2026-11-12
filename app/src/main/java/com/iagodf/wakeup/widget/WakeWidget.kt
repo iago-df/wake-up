@@ -22,7 +22,7 @@ import com.iagodf.wakeup.data.AppState
 import java.time.LocalTime
 import java.util.concurrent.TimeUnit
 
-class WakeWidget : AppWidgetProvider() {
+open class WakeWidget : AppWidgetProvider() {
 
     override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) {
         render(ctx)
@@ -53,10 +53,12 @@ class WakeWidget : AppWidgetProvider() {
         /** redibuja todos los widgets con lo que hay guardado */
         fun render(ctx: Context, state: AppState? = null) {
             val mgr = AppWidgetManager.getInstance(ctx)
-            val ids = mgr.getAppWidgetIds(ComponentName(ctx, WakeWidget::class.java))
+            val ids = mgr.getAppWidgetIds(ComponentName(ctx, WakeWidget::class.java)) +
+                mgr.getAppWidgetIds(ComponentName(ctx, WakeWidgetSmall::class.java))
             if (ids.isEmpty()) return
             val st = state ?: AppState(ctx)
             val pct = st.pct(st.today)
+            val minutes = st.phoneMinutes(st.today)
             val now = LocalTime.now()
             val hour = now.hour + now.minute / 60f
             val dm = ctx.resources.displayMetrics
@@ -68,12 +70,13 @@ class WakeWidget : AppWidgetProvider() {
                 val scale = minOf(dm.density, 900f / wDp)
                 val w = (wDp * scale).toInt()
                 val h = (hDp * scale).toInt()
-                val s = wDp * dm.density / 820f
+                val compact = Scene.isCompact(w, h)
+                val s = wDp * dm.density / (if (compact) 400f else 820f)
 
                 val views = RemoteViews(ctx.packageName, R.layout.widget)
-                views.setImageViewBitmap(R.id.img, Scene.render(ctx, w, h, pct, hour))
-                views.setTextViewTextSize(R.id.clock, TypedValue.COMPLEX_UNIT_PX, 23 * s)
-                views.setViewPadding(R.id.clock, (56 * s).toInt(), (40 * s).toInt(), 0, 0)
+                views.setImageViewBitmap(R.id.img, Scene.render(ctx, w, h, pct, minutes, hour))
+                views.setTextViewTextSize(R.id.clock, TypedValue.COMPLEX_UNIT_PX, (if (compact) 20 else 23) * s)
+                views.setViewPadding(R.id.clock, ((if (compact) 34 else 56) * s).toInt(), ((if (compact) 30 else 40) * s).toInt(), 0, 0)
                 val open = PendingIntent.getActivity(
                     ctx, 0, Intent(ctx, MainActivity::class.java),
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
@@ -84,6 +87,9 @@ class WakeWidget : AppWidgetProvider() {
         }
     }
 }
+
+/** el mismo widget pero que entra por defecto en 2x2 */
+class WakeWidgetSmall : WakeWidget()
 
 /** cada 15 min: leer el uso del movil y redibujar el widget */
 class WidgetWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {

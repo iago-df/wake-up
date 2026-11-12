@@ -7,7 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
@@ -97,8 +97,14 @@ private fun WidgetPreview(state: AppState) {
     val now = state.now.hour + state.now.minute / 60f
     val hour = if (moment < 0) now else MOMENTS[moment].second
     val pct = state.pct(state.today)
-    val bmp = remember(hour, pct) { Scene.render(ctx, 820, 400, pct, hour).asImageBitmap() }
-    Image(bmp, null, Modifier.fillMaxWidth().aspectRatio(820f / 400f), contentScale = ContentScale.FillBounds)
+    val min = state.phoneMinutes(state.today)
+    // el grande (4x2) y el pequeño (2x2)
+    val big = remember(hour, pct, min) { Scene.render(ctx, 820, 400, pct, min, hour).asImageBitmap() }
+    val small = remember(hour, pct, min) { Scene.render(ctx, 400, 400, pct, min, hour).asImageBitmap() }
+    Row(Modifier.fillMaxWidth().height(u.dp(214)), horizontalArrangement = Arrangement.spacedBy(u.dp(14))) {
+        Image(big, null, Modifier.weight(820f).fillMaxHeight(), contentScale = ContentScale.FillBounds)
+        Image(small, null, Modifier.weight(400f).fillMaxHeight(), contentScale = ContentScale.FillBounds)
+    }
     Gap(14)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(u.dp(10))) {
         MOMENTS.forEachIndexed { i, m ->
@@ -110,5 +116,5 @@ private fun WidgetPreview(state: AppState) {
         }
     }
     Gap(12)
-    T("añádelo desde la pantalla de inicio: mantén pulsado > widgets > wake up", 21, color = C.Muted, weight = 400, lh = 1.35f)
+    T("añádelo desde la pantalla de inicio: mantén pulsado > widgets > wake up. hay uno grande y uno pequeño", 21, color = C.Muted, weight = 400, lh = 1.35f)
 }

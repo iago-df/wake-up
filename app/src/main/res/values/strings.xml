@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">wake up</string>
+    <string name="widget_small">wake up · pequeño</string>
     <string name="widget_desc">el % de tu tiempo libre que se lleva el móvil y una casa de campo que amanece y anochece contigo</string>
 </resources>

@@ -59,24 +59,33 @@ object Scene {
     private fun inter(ctx: Context): Typeface =
         inter ?: (ResourcesCompat.getFont(ctx, R.font.inter) ?: Typeface.DEFAULT_BOLD).also { inter = it }
 
-    fun render(ctx: Context, w: Int, h: Int, pct: Int, hour: Float): Bitmap {
+    /** el widget pequeño (2x2) usa otra distribucion */
+    fun isCompact(w: Int, h: Int) = w < h * 1.45f
+
+    private fun fmt(min: Int) = if (min < 60) "$min min" else "${min / 60} h ${min % 60} min"
+
+    fun render(ctx: Context, w: Int, h: Int, pct: Int, minutes: Int, hour: Float): Bitmap {
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val cv = Canvas(bmp)
-        val s = w / 820f
+        val compact = isCompact(w, h)
+        // s escala los textos, k la escena. en el pequeño la casa va algo mas grande y pegada a la derecha
+        val s = if (compact) w / 400f else w / 820f
+        val k = if (compact) w / 820f * 1.25f else s
         val W = w.toFloat()
         val H = h.toFloat()
         val p = Paint(Paint.ANTI_ALIAS_FLAG)
         val (c1, c2) = dayPal(hour)
+        val radius = (if (compact) 62 else 70) * s
 
         // todo va recortado a la tarjeta redondeada
-        val card = Path().apply { addRoundRect(RectF(0f, 0f, W, H), 70 * s, 70 * s, Path.Direction.CW) }
+        val card = Path().apply { addRoundRect(RectF(0f, 0f, W, H), radius, radius, Path.Direction.CW) }
         cv.save()
         cv.clipPath(card)
         cv.drawColor(Color.rgb(9, 9, 13))
 
         // brillo de abajo
         val rx = W * .75f
-        val ry = H * .6f
+        val ry = H * (if (compact) .5f else .6f)
         cv.save()
         cv.translate(W / 2f, H * 1.02f)
         cv.scale(1f, ry / rx)
@@ -89,19 +98,23 @@ object Scene {
         cv.restore()
         p.shader = null
 
-        // la escena va pegada abajo
+        // la escena va pegada abajo a la derecha
         cv.save()
-        cv.translate(0f, H - 400 * s)
-        cv.scale(s, s)
+        cv.translate(W - 820 * k, H - 400 * k)
+        cv.scale(k, k)
 
-        // sol de 6:12 a 20:48, luna el resto
+        // sol de 6:12 a 20:48, luna el resto. en el pequeño el arco es bajo para no pisar el texto
         val ps = (hour - 6.2f) / (20.8f - 6.2f)
         val hn = if (hour < 6.2f) hour + 24f else hour
         val pm = (hn - 20.6f) / 9.6f
+        val x0 = if (compact) 200f else 430f
+        val dx = if (compact) 270f else 340f
+        val y0 = if (compact) 335f else 345f
+        val amp = if (compact) 95f else 270f
         if (ps in 0f..1f) {
-            orb(cv, p, 430 + 340 * ps, 345 - sin(PI * ps).toFloat() * 270, 32f, Color.rgb(255, 231, 166), Color.argb(190, 255, 220, 150), 1f)
+            orb(cv, p, x0 + dx * ps, y0 - sin(PI * ps).toFloat() * amp, 32f, Color.rgb(255, 231, 166), Color.argb(190, 255, 220, 150), 1f)
         } else if (pm in 0f..1f) {
-            orb(cv, p, 430 + 340 * pm, 345 - sin(PI * pm).toFloat() * 270, 23f, Color.rgb(207, 216, 255), Color.argb(150, 190, 205, 255), smooth(0f, .1f, pm))
+            orb(cv, p, x0 + dx * pm, y0 - sin(PI * pm).toFloat() * amp, 23f, Color.rgb(207, 216, 255), Color.argb(150, 190, 205, 255), smooth(0f, .1f, pm))
         }
 
         // colina, casa con chimenea y arbol
@@ -131,25 +144,35 @@ object Scene {
         cv.restore()
 
         // textos (la hora de arriba la pone un TextClock para que vaya en directo)
+        // 66% / de tu tiempo libre perdido / 5 h 8 min con el movil
+        val left = (if (compact) 34 else 56) * s
+        val big = (if (compact) (if (pct >= 100) 118 else 150) else 170) * s
+        val bigBase = (if (compact) 196 else 218) * s
+        val small = (if (compact) 24 else 28) * s
+        val line1 = (if (compact) 232 else 258) * s
+        val line2 = (if (compact) 264 else 294) * s
         p.color = Color.WHITE
         // la fuente es variable, el peso se pide en el paint
         p.typeface = inter(ctx)
         p.fontVariationSettings = "'wght' 600"
-        p.textSize = 196 * s
+        p.textSize = big
         p.letterSpacing = -.046f
-        cv.drawText("$pct%", 50 * s, 246 * s, p)
-        p.color = Color.rgb(230, 230, 239)
+        cv.drawText("$pct%", left - 6 * s, bigBase, p)
+        p.color = Color.rgb(214, 214, 226)
         p.fontVariationSettings = "'wght' 500"
-        p.textSize = 29 * s
+        p.textSize = small
         p.letterSpacing = 0f
-        cv.drawText("de tu tiempo libre", 56 * s, 290 * s, p)
+        cv.drawText("de tu tiempo libre perdido", left, line1, p)
+        p.color = Color.WHITE
+        p.fontVariationSettings = "'wght' 650"
+        cv.drawText("${fmt(minutes)} con el móvil", left, line2, p)
         cv.restore()
 
         // borde fino
         p.style = Paint.Style.STROKE
         p.strokeWidth = 1.5f * s
         p.color = Color.argb(26, 255, 255, 255)
-        cv.drawRoundRect(RectF(s, s, W - s, H - s), 70 * s, 70 * s, p)
+        cv.drawRoundRect(RectF(s, s, W - s, H - s), radius, radius, p)
         return bmp
     }
 
