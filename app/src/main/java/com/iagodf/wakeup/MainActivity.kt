@@ -41,12 +41,12 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.iagodf.wakeup.data.AppState
+import com.iagodf.wakeup.data.ClaudeModel
 import com.iagodf.wakeup.ui.C
-import com.iagodf.wakeup.ui.Header
 import com.iagodf.wakeup.ui.LocalU
 import com.iagodf.wakeup.ui.NavBar
-import com.iagodf.wakeup.ui.ScreenColumn
 import com.iagodf.wakeup.ui.U
+import com.iagodf.wakeup.ui.claude.ClaudeScreen
 import com.iagodf.wakeup.ui.clases.CalendarScreen
 import com.iagodf.wakeup.ui.proyectos.ProyectosScreen
 import com.iagodf.wakeup.ui.tiempo.TiempoScreen
@@ -74,6 +74,7 @@ fun App(state: AppState) {
     val scope = rememberCoroutineScope()
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var calendar by rememberSaveable { mutableStateOf(false) }
+    val claude = remember { ClaudeModel(state, scope) }
 
     // refrescar el uso al volver a la app y cada minuto mientras esta abierta
     LifecycleResumeEffect(Unit) {
@@ -96,8 +97,8 @@ fun App(state: AppState) {
         ) { t ->
             when (t) {
                 0 -> TiempoScreen(state) { calendar = true }
-                1 -> ProyectosScreen(state) { tab = 2 }
-                else -> ScreenColumn { Header("Claude", "pronto") }
+                1 -> ProyectosScreen(state) { p -> claude.startFor(p); tab = 2 }
+                else -> ClaudeScreen(state, claude)
             }
         }
         // degradado para que el contenido se pierda debajo de la barra
