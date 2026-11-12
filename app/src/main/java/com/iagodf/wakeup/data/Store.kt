@@ -74,6 +74,50 @@ class Store(ctx: Context) {
         sp.edit().putString("history", o.toString()).apply()
     }
 
+    /** minutos de movil de cada tramo de media hora, por dia */
+    fun slots(): Map<LocalDate, IntArray> {
+        val o = JSONObject(sp.getString("slots", "{}")!!)
+        val out = HashMap<LocalDate, IntArray>()
+        for (k in o.keys()) {
+            val parts = o.getString(k).split(',')
+            if (parts.size == SLOTS_PER_DAY) out[LocalDate.parse(k)] = IntArray(SLOTS_PER_DAY) { parts[it].toIntOrNull() ?: 0 }
+        }
+        return out
+    }
+
+    fun saveSlots(m: Map<LocalDate, IntArray>) {
+        val o = JSONObject()
+        m.forEach { (d, a) -> o.put(d.toString(), a.joinToString(",")) }
+        sp.edit().putString("slots", o.toString()).apply()
+    }
+
+    /** mi dia: lo que apunte que hice en cada tramo. dia -> (tramo -> id del proyecto) */
+    fun log(): Map<LocalDate, Map<Int, Long>> {
+        val o = JSONObject(sp.getString("log", "{}")!!)
+        val out = HashMap<LocalDate, Map<Int, Long>>()
+        for (k in o.keys()) {
+            val day = o.getJSONObject(k)
+            val m = HashMap<Int, Long>()
+            for (slot in day.keys()) m[slot.toInt()] = day.getLong(slot)
+            out[LocalDate.parse(k)] = m
+        }
+        return out
+    }
+
+    fun saveLog(m: Map<LocalDate, Map<Int, Long>>) {
+        val o = JSONObject()
+        m.forEach { (d, day) ->
+            val j = JSONObject()
+            day.forEach { (slot, id) -> j.put(slot.toString(), id) }
+            o.put(d.toString(), j)
+        }
+        sp.edit().putString("log", o.toString()).apply()
+    }
+
+    /** tramos en los que el movil era para el proyecto y no resta ("dia|tramo") */
+    fun phoneOk(): Set<String> = sp.getStringSet("phoneok", emptySet())!!.toSet()
+    fun savePhoneOk(s: Set<String>) = sp.edit().putStringSet("phoneok", s).apply()
+
     fun server() = ServerCfg(sp.getString("srv_url", "")!!, sp.getString("srv_token", "")!!, sp.getString("srv_name", "")!!)
     fun save(s: ServerCfg) = sp.edit().putString("srv_url", s.url).putString("srv_token", s.token).putString("srv_name", s.name).apply()
 
