@@ -1,0 +1,16 @@
+# ejemplo para dejarlo siempre encendido en un servidor linux con systemd
+# copiar a /etc/systemd/system/wakeup.service y cambiar usuario y rutas
+#   sudo systemctl enable --now wakeup
+
+[Unit]
+Description=wake up server
+After=network-online.target
+
+[Service]
+User=TU_USUARIO
+WorkingDirectory=/home/TU_USUARIO/wake-up/server
+ExecStart=/usr/bin/python3 wakeup_server.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
