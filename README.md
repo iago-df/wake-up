@@ -5,6 +5,7 @@ app android para ver cuánto tiempo me come el móvil. no bloquea nada: solo te 
 <p>
   <img src="docs/tiempo.png" width="200">
   <img src="docs/clases.png" width="200">
+  <img src="docs/midia.png" width="200">
   <img src="docs/proyectos.png" width="200">
   <img src="docs/widget.png" width="200">
 </p>
@@ -14,8 +15,9 @@ app android para ver cuánto tiempo me come el móvil. no bloquea nada: solo te 
 - **widget**: el % de tu tiempo libre de hoy que se ha llevado el móvil y una casa de campo que cambia con la hora real (amanecer, día con sol, atardecer y noche con luna y las ventanas encendidas).
 - **tiempo**: le dices cuánto duermes, cuánto se te va en tareas básicas y en comidas. con eso y tus clases calcula tu tiempo libre real y cuánto se lleva el móvil: hoy, últimos 7 días y vida (años de pantalla de aquí a los 80 a este ritmo).
 - **clases**: el horario de la semana a cuadros. tocas cada bloque: blanco = fui, negro = no fui. las clases a las que vas cuentan como tiempo ocupado.
+- **mi día**: el día en tramos de media hora. las clases a las que fuiste ya salen rellenas; el resto lo pintas con el proyecto en el que estuviste. cada tramo enseña los minutos de móvil que hubo y se los resta, así que 2 h apuntadas con 50 min de pantalla son 1 h 10 min reales. si el móvil era para el proyecto lo marcas con "móvil ✓" y no resta.
 - **lo que pudo ser**: las horas de móvil de la semana repartidas entre tus proyectos por prioridad.
-- **proyectos**: lista por prioridad con tarjetas grandes. en cada uno editas las horas por semana, la prioridad y el progreso, y tiene un botón para desarrollarlo con claude.
+- **proyectos**: lista por prioridad con tarjetas grandes. en cada uno editas las horas por semana y la prioridad, ves las horas reales que le llevas esta semana (salen de mi día) y tiene un botón para desarrollarlo con claude.
 - **claude**: panel de tus sesiones de claude code del pc: tokens de la semana, tokens por sesión y un chat para mandar órdenes desde el móvil. necesita el servidor de `server/`.
 
 todo se guarda en el móvil. lo único que sale de él es lo que hables con tu propio servidor.

@@ -6,8 +6,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.temporal.TemporalAdjusters
 import kotlin.math.roundToInt
 
 /** estado de toda la app + las cuentas del tiempo libre */
@@ -19,6 +21,9 @@ class AppState(ctx: Context) {
     var projects by mutableStateOf(store.projects()); private set
     var attended by mutableStateOf(store.attended()); private set
     var usage by mutableStateOf(store.history()); private set
+    var slots by mutableStateOf(store.slots()); private set
+    var log by mutableStateOf(store.log()); private set
+    var phoneOk by mutableStateOf(store.phoneOk()); private set
     var server by mutableStateOf(store.server()); private set
     var hasAccess by mutableStateOf(UsageReader.hasAccess(app)); private set
     var now: LocalDateTime by mutableStateOf(LocalDateTime.now()); private set
@@ -29,8 +34,9 @@ class AppState(ctx: Context) {
         now = LocalDateTime.now()
         hasAccess = UsageReader.hasAccess(app)
         if (!hasAccess) return
-        val merged = withContext(Dispatchers.IO) { syncUsage(app, store) }
-        usage = merged
+        val (days, perSlot) = withContext(Dispatchers.IO) { syncUsage(app, store) }
+        usage = days
+        slots = perSlot
     }
 
     fun update(s: Settings) { settings = s; store.save(s) }
@@ -97,22 +103,82 @@ class AppState(ctx: Context) {
         return out
     }
 
+    // ---- mi dia ----
+
+    fun slotPhone(d: LocalDate, slot: Int): Int = slots[d]?.getOrNull(slot) ?: 0
+    fun logged(d: LocalDate, slot: Int): Long? = log[d]?.get(slot)
+    fun isPhoneOk(d: LocalDate, slot: Int): Boolean = "$d|$slot" in phoneOk
+
+    /** apunta (o borra con null) lo que hice en un tramo */
+    fun setSlot(d: LocalDate, slot: Int, projectId: Long?) {
+        val day = HashMap(log[d] ?: emptyMap())
+        if (projectId == null) day.remove(slot) else day[slot] = projectId
+        log = if (day.isEmpty()) log - d else log + (d to day)
+        store.saveLog(log)
+        if (projectId == null && isPhoneOk(d, slot)) togglePhoneOk(d, slot)
+    }
+
+    fun togglePhoneOk(d: LocalDate, slot: Int) {
+        val k = "$d|$slot"
+        phoneOk = if (k in phoneOk) phoneOk - k else phoneOk + k
+        store.savePhoneOk(phoneOk)
+    }
+
+    /** la clase que ocupa ese tramo, si fui o si todavia no ha pasado */
+    fun classAt(d: LocalDate, slot: Int): Block? = Schedule.blocksOn(d).firstOrNull {
+        val first = it.start.toSecondOfDay() / 60 / SLOT_MIN
+        slot >= first && slot < first + Block.MINUTES / SLOT_MIN && Schedule.counts(it, d, attended, now)
+    }
+
+    /** minutos de un tramo que ya han pasado */
+    fun slotElapsed(d: LocalDate, slot: Int): Int = when {
+        d.isBefore(today) -> SLOT_MIN
+        d.isAfter(today) -> 0
+        else -> (now.hour * 60 + now.minute - slot * SLOT_MIN).coerceIn(0, SLOT_MIN)
+    }
+
+    /** minutos reales de un tramo apuntado: lo que duro menos el rato que estuve con el movil */
+    fun slotReal(d: LocalDate, slot: Int): Int {
+        val len = slotElapsed(d, slot)
+        return if (isPhoneOk(d, slot)) len else (len - slotPhone(d, slot)).coerceAtLeast(0)
+    }
+
+    fun realMinutes(projectId: Long, d: LocalDate): Int =
+        (log[d] ?: emptyMap()).entries.filter { it.value == projectId && classAt(d, it.key) == null }.sumOf { slotReal(d, it.key) }
+
+    fun dayReal(d: LocalDate): Int = projects.sumOf { realMinutes(it.id, d) }
+
+    /** de lunes a hoy */
+    val thisWeek: List<LocalDate> get() {
+        val monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        return generateSequence(monday) { it.plusDays(1) }.takeWhile { !it.isAfter(today) }.toList()
+    }
+
+    /** horas reales que le di a un proyecto esta semana */
+    fun weekReal(projectId: Long): Int = thisWeek.sumOf { realMinutes(projectId, it) }
+
     companion object {
         /** lee el uso, lo mezcla con lo guardado y lo guarda. lo usa tambien el widget */
-        fun syncUsage(ctx: Context, store: Store): Map<LocalDate, DayUsage> {
+        fun syncUsage(ctx: Context, store: Store): Pair<Map<LocalDate, DayUsage>, Map<LocalDate, IntArray>> {
             val fresh = UsageReader.read(ctx)
-            val merged = HashMap(store.history())
+            val days = HashMap(store.history())
+            val slots = HashMap(store.slots())
             val today = LocalDate.now()
-            fresh.forEach { (d, u) ->
-                val old = merged[d]
+            fresh.days.forEach { (d, u) ->
+                val old = days[d]
                 // hoy siempre el dato nuevo; dias pasados me quedo con el mayor por si el sistema ya borro eventos
-                merged[d] = if (d == today || old == null) u else DayUsage(maxOf(old.minutes, u.minutes), maxOf(old.unlocks, u.unlocks))
+                if (d == today || old == null || u.minutes >= old.minutes) {
+                    days[d] = if (old == null || d == today) u else DayUsage(u.minutes, maxOf(old.unlocks, u.unlocks))
+                    fresh.slots[d]?.let { slots[d] = it }
+                }
             }
             // no hace falta guardar mas de 60 dias
             val cut = today.minusDays(60)
-            val trimmed = merged.filterKeys { !it.isBefore(cut) }
-            store.saveHistory(trimmed)
-            return trimmed
+            val keptDays = days.filterKeys { !it.isBefore(cut) }
+            val keptSlots = slots.filterKeys { !it.isBefore(cut) }
+            store.saveHistory(keptDays)
+            store.saveSlots(keptSlots)
+            return keptDays to keptSlots
         }
     }
 }

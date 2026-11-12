@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.iagodf.wakeup.data.AppState
 import com.iagodf.wakeup.data.Project
+import com.iagodf.wakeup.data.fmtH
 import com.iagodf.wakeup.ui.Gap
 import com.iagodf.wakeup.ui.Header
 import com.iagodf.wakeup.ui.Inter
@@ -44,7 +45,7 @@ import com.iagodf.wakeup.ui.T
 import com.iagodf.wakeup.ui.tap
 
 @Composable
-fun ProyectosScreen(state: AppState, onClaude: (Project) -> Unit) {
+fun ProyectosScreen(state: AppState, onLog: () -> Unit, onClaude: (Project) -> Unit) {
     var open by remember { mutableStateOf<Long?>(null) }
     val lost = state.lostHours()
     ScreenColumn {
@@ -57,7 +58,7 @@ fun ProyectosScreen(state: AppState, onClaude: (Project) -> Unit) {
         }
         state.projects.forEachIndexed { i, p ->
             Gap(22)
-            ProjectCard(i + 1, p, lost[p.id] ?: 0) { open = p.id }
+            ProjectCard(i + 1, p, lost[p.id] ?: 0, state.weekReal(p.id)) { open = p.id }
         }
         if (state.projects.isEmpty()) {
             Gap(60)
@@ -66,13 +67,13 @@ fun ProyectosScreen(state: AppState, onClaude: (Project) -> Unit) {
     }
     val current = state.projects.firstOrNull { it.id == open }
     if (current != null) {
-        ProjectSheet(state, current, onClose = { open = null }, onClaude = { open = null; onClaude(current) })
+        ProjectSheet(state, current, onClose = { open = null }, onLog = { open = null; onLog() }, onClaude = { open = null; onClaude(current) })
     }
 }
 
 /** tarjeta grande de paisaje, con el nombre gigante cortado por abajo */
 @Composable
-fun ProjectCard(rank: Int, p: Project, lost: Int, onClick: () -> Unit) {
+fun ProjectCard(rank: Int, p: Project, lost: Int, real: Int, onClick: () -> Unit) {
     val u = LocalU.current
     val shape = RoundedCornerShape(u.dp(46))
     val look = LOOKS[p.look.mod(LOOKS.size)]
@@ -86,7 +87,7 @@ fun ProjectCard(rank: Int, p: Project, lost: Int, onClick: () -> Unit) {
             .tap(onClick = onClick),
     ) {
         Image(bmp, null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
-        Chip("#$rank · ${p.hoursPerWeek} h / sem", Color.White.copy(alpha = .2f), Modifier.align(Alignment.TopStart))
+        Chip("#$rank · ${fmtH(real)} de ${p.hoursPerWeek} h", Color.White.copy(alpha = .2f), Modifier.align(Alignment.TopStart))
         Chip("+$lost h perdidas", Color(0x800A0A0E), Modifier.align(Alignment.TopEnd))
 
         // el nombre ocupa todo el ancho, como en el video (maximo 200px)

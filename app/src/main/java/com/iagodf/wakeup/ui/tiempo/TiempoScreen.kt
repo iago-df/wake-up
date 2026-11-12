@@ -76,7 +76,7 @@ private val DATE = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", Locale.forLan
 private data class HeroData(val kicker: String, val big: String, val label: String, val sub: String, val pal: Pal, val lit: Int, val small: Boolean = false)
 
 @Composable
-fun TiempoScreen(state: AppState, onCalendar: () -> Unit) {
+fun TiempoScreen(state: AppState, onCalendar: () -> Unit, onDay: () -> Unit) {
     val u = LocalU.current
     val ctx = LocalContext.current
     var range by rememberSaveable { mutableIntStateOf(0) }
@@ -163,6 +163,28 @@ fun TiempoScreen(state: AppState, onCalendar: () -> Unit) {
                 blocks.forEachIndexed { i, b ->
                     if (i > 0) Box(Modifier.fillMaxWidth().height(u.dp(1.5)).background(C.Line))
                     ClassRow(b, state) { state.toggleAttended(b, today) }
+                }
+            }
+        }
+
+        // mi dia: horas reales de hoy por proyecto (lo apuntado menos el rato de movil)
+        Gap(22)
+        Panel(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(horizontal = u.dp(34), vertical = u.dp(32))) {
+                Row(Modifier.fillMaxWidth().tap(onClick = onDay), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Kicker("Mi día · real")
+                    T("APUNTAR ›", 21, color = Color.White, weight = 600, ls = 3)
+                }
+                Gap(14)
+                val done = state.projects.map { it to state.realMinutes(it.id, today) }.filter { it.second > 0 }
+                if (done.isEmpty()) {
+                    T("todavía no has apuntado nada hoy", 26, Modifier.fillMaxWidth().tap(onClick = onDay).padding(vertical = u.dp(10)), color = C.Muted, weight = 500)
+                }
+                done.forEach { (p, min) ->
+                    Row(Modifier.fillMaxWidth().padding(vertical = u.dp(13)), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        T(p.name, 28, Modifier.weight(1f), weight = 500, maxLines = 1)
+                        T(fmtHM(min), 30, color = C.Green, weight = 650)
+                    }
                 }
             }
         }

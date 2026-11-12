@@ -110,3 +110,8 @@ fun landscape(look: Look, w: Int, h: Int): Bitmap {
     cv.drawRect(0f, 0f, W, H, paint)
     return bmp
 }
+
+/** color de cada paisaje, para pintar el proyecto en "mi dia" */
+private val LOOK_COLORS = listOf(0xFFF0803C, 0xFF3F8FF0, 0xFF45B07A, 0xFF9A72F5, 0xFFE8554E, 0xFF3A93B8)
+
+fun lookColor(look: Int) = androidx.compose.ui.graphics.Color(LOOK_COLORS[look.mod(LOOK_COLORS.size)])
