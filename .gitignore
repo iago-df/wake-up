@@ -1,0 +1,24 @@
+# video promo y notas (no van al repo)
+imcooked/
+
+# android
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# server
+__pycache__/
+*.pyc
+.env
+server/config.json
+server/orders/
