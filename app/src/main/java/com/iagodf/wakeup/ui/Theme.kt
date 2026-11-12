@@ -94,7 +94,7 @@ fun T(
         text, modifier, style,
         maxLines = maxLines,
         softWrap = maxLines != 1,
-        overflow = if (maxLines == 1) TextOverflow.Clip else TextOverflow.Ellipsis,
+        overflow = TextOverflow.Ellipsis,
     )
 }
 
