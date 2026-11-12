@@ -28,7 +28,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -76,7 +75,8 @@ fun App(state: AppState) {
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current.applicationContext
     var tab by rememberSaveable { mutableIntStateOf(0) }
-    var calendar by rememberSaveable { mutableStateOf(false) }
+    // -1 cerrado, 0 clases, 1 mi dia
+    var overlay by rememberSaveable { mutableIntStateOf(-1) }
     val claude = remember { ClaudeModel(state, scope) }
 
     // refrescar el uso al volver a la app y cada minuto mientras esta abierta
@@ -99,8 +99,8 @@ fun App(state: AppState) {
             label = "tab",
         ) { t ->
             when (t) {
-                0 -> TiempoScreen(state) { calendar = true }
-                1 -> ProyectosScreen(state) { p -> claude.startFor(p); tab = 2 }
+                0 -> TiempoScreen(state, onCalendar = { overlay = 0 }, onDay = { overlay = 1 })
+                1 -> ProyectosScreen(state, onLog = { overlay = 1 }) { p -> claude.startFor(p); tab = 2 }
                 else -> ClaudeScreen(state, claude)
             }
         }
@@ -115,9 +115,9 @@ fun App(state: AppState) {
         NavBar(tab, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = u.dp(36))) { tab = it }
 
         AnimatedVisibility(
-            calendar,
+            overlay >= 0,
             enter = slideInVertically(tween(380)) { it } + fadeIn(tween(200)),
             exit = slideOutVertically(tween(300)) { it } + fadeOut(tween(300)),
-        ) { CalendarScreen(state) { calendar = false } }
+        ) { CalendarScreen(state, overlay.coerceAtLeast(0)) { overlay = -1 } }
     }
 }
