@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import com.iagodf.wakeup.data.AppState
+import com.iagodf.wakeup.data.Fixed
 import com.iagodf.wakeup.data.Lang
 import com.iagodf.wakeup.data.tr
 import com.iagodf.wakeup.data.Project
@@ -59,50 +60,70 @@ import java.util.Locale
 /** pincel especial: marca que en ese tramo el movil era para el proyecto y no resta */
 private const val PHONE_OK = -2L
 private const val FIRST_SLOT = 14 // 07:00
+private const val MAX_AHEAD = 14 // dias hacia delante que se pueden planificar
+
+/** nombre y color de lo que no es un proyecto (comidas, tareas basicas) */
+private fun fixedName(id: Long): String = if (id == Fixed.MEALS) tr("Comida", "Meal") else tr("Básicas", "Chores")
+private fun fixedColor(id: Long): Color = if (id == Fixed.MEALS) Color(0xFFE2B84A) else Color(0xFF8A94A8)
 private val DAY: DateTimeFormatter get() = DateTimeFormatter.ofPattern("EEEE d MMM", Lang.locale)
 
 /**
- * mi dia: el dia en tramos de media hora. las clases a las que fui salen rellenas,
- * el resto lo pinto yo con el proyecto en el que estuve, y cada tramo enseña
- * los minutos de movil que hubo para que no me engañe
+ * mi dia: el dia en tramos de media hora. las clases que marque salen rellenas,
+ * el resto lo pinto yo con el proyecto en el que estuve (o comida / tareas basicas),
+ * y cada tramo enseña los minutos de movil que hubo para que no me engañe.
+ * tambien se puede ir a los dias siguientes para planificarlos
  */
 @Composable
 fun ColumnScope.DayLog(state: AppState) {
     val u = LocalU.current
-    var back by rememberSaveable { mutableIntStateOf(0) }
-    val date = state.today.minusDays(back.toLong())
-    var brush by rememberSaveable { mutableLongStateOf(state.projects.firstOrNull()?.id ?: PHONE_OK) }
-    if (brush != PHONE_OK && state.projects.none { it.id == brush }) brush = state.projects.firstOrNull()?.id ?: PHONE_OK
+    // dias respecto a hoy: negativo = pasado, positivo = lo que planeo
+    var offset by rememberSaveable { mutableIntStateOf(0) }
+    val date = state.today.plusDays(offset.toLong())
+    val future = offset > 0
+    var brush by rememberSaveable { mutableLongStateOf(state.projects.firstOrNull()?.id ?: Fixed.MEALS) }
+    if (brush != PHONE_OK && brush !in Fixed.all && state.projects.none { it.id == brush }) brush = state.projects.firstOrNull()?.id ?: Fixed.MEALS
 
-    // cambiar de dia (solo hacia atras, el futuro no se puede apuntar)
+    // cambiar de dia: hacia atras para apuntar, hacia delante para planificar
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        RoundBtn("‹", size = 78) { back++ }
+        RoundBtn("‹", size = 78) { offset-- }
         Box(
-            Modifier.weight(1f).padding(horizontal = u.dp(14)).height(u.dp(78)).glass(CircleShape).tap { back = 0 },
+            Modifier.weight(1f).padding(horizontal = u.dp(14)).height(u.dp(78)).glass(CircleShape).tap { offset = 0 },
             contentAlignment = Alignment.Center,
-        ) { T(if (back == 0) "${tr("hoy", "today")} · ${date.format(DAY).lowercase()}" else date.format(DAY).lowercase(), 25, weight = 600, maxLines = 1) }
-        RoundBtn("›", size = 78) { if (back > 0) back-- }
+        ) {
+            val day = date.format(DAY).lowercase()
+            val near = when (offset) {
+                0 -> tr("hoy", "today")
+                1 -> tr("mañana", "tomorrow")
+                -1 -> tr("ayer", "yesterday")
+                else -> null
+            }
+            T(if (near != null) "$near · $day" else day, 25, weight = 600, maxLines = 1)
+        }
+        RoundBtn("›", size = 78) { if (offset < MAX_AHEAD) offset++ }
     }
 
-    // resumen del dia
+    // resumen del dia (en los dias que aun no han llegado, lo planeado en vez de lo real)
     Gap(18)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(u.dp(14))) {
-        Mini("REAL", fmtH(state.dayReal(date)), Pals.G, Modifier.weight(1f))
+        if (future) Mini("PLAN", fmtH(state.plannedMinutes(date)), Pals.G, Modifier.weight(1f))
+        else Mini("REAL", fmtH(state.dayReal(date)), Pals.G, Modifier.weight(1f))
         Mini(tr("MÓVIL", "PHONE"), fmtH(state.phoneMinutes(date)), Pals.O, Modifier.weight(1f))
-        Mini(tr("CLASES", "CLASSES"), fmtH(state.classMinutes(date)), Pals.B, Modifier.weight(1f))
+        Mini(tr("CLASES", "CLASSES"), fmtH(state.markedClassMinutes(date)), Pals.B, Modifier.weight(1f))
     }
 
     // con que pinto
     Gap(18)
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(u.dp(10))) {
         state.projects.forEach { p -> BrushChip(p.name, lookColor(p.look), brush == p.id) { brush = p.id } }
+        Fixed.all.forEach { id -> BrushChip(fixedName(id), fixedColor(id), brush == id) { brush = id } }
         BrushChip(tr("Móvil ✓", "Phone ✓"), C.Orange, brush == PHONE_OK) { brush = PHONE_OK }
     }
     Gap(10)
     T(
         when {
-            state.projects.isEmpty() -> tr("crea un proyecto para poder apuntar", "create a project to start logging")
             brush == PHONE_OK -> tr("toca un tramo apuntado si el móvil era para el proyecto: no le resta", "tap a logged slot if the phone was for the project: it won't count")
+            brush in Fixed.all -> tr("toca los tramos de esto. es para organizarte, no suma horas de proyecto", "tap the slots for this. it's for planning, it adds no project hours")
+            future -> tr("toca los tramos en los que piensas ponerte con esto. otra vez para borrar", "tap the slots where you plan to work on this. tap again to erase")
             else -> tr("toca los tramos en los que estuviste con esto. otra vez para borrar", "tap the slots where you worked on this. tap again to erase")
         },
         20, color = C.Muted, weight = 400, maxLines = 1,
@@ -117,7 +138,7 @@ fun ColumnScope.DayLog(state: AppState) {
     val rowPx = with(LocalDensity.current) { u.dp(72).toPx() }
     LaunchedEffect(date) {
         // hoy: bajar hasta la hora que es
-        val now = if (back == 0) (state.now.hour * 60 + state.now.minute) / SLOT_MIN else first
+        val now = if (offset == 0) (state.now.hour * 60 + state.now.minute) / SLOT_MIN else first
         scroll.scrollTo(((now - 3 - first).coerceAtLeast(0) * rowPx).toInt())
     }
     Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(scroll)) {
@@ -177,21 +198,29 @@ private fun SlotRow(state: AppState, date: LocalDate, slot: Int, brush: Long) {
         )
         val cell = Modifier.weight(1f).fillMaxHeight().clip(shape)
         when {
-            // clase: ya viene rellena, no se toca aqui
+            // clase marcada: ya viene rellena, no se toca aqui (se marca y desmarca en clases)
             cls != null -> {
-                val went = cls.key(date) in state.attended
                 Row(
-                    cell.background(if (went) Color.White else Color.Black)
-                        .border(u.dp(1.5), Color.White.copy(alpha = if (went) 0f else .2f), shape)
+                    cell.background(Color.White).padding(horizontal = u.dp(22)),
+                    horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val fg = Color(0xFF07070A)
+                    T("${cls.code} · ${cls.room}", 23, Modifier.weight(1f), color = fg, weight = 800, maxLines = 1)
+                    if (phone > 0) T("$phone min ${tr("móvil", "phone")}", 19, color = Color(0xFFB3261E), weight = 700)
+                }
+            }
+            // comida o tareas basicas: se pinta mas apagado que un proyecto, solo organiza
+            pid != null && pid in Fixed.all -> {
+                val color = fixedColor(pid)
+                Row(
+                    cell.background(color.copy(alpha = .22f))
+                        .border(u.dp(1.5), color.copy(alpha = .55f), shape)
+                        .tap { if (brush != PHONE_OK) state.setSlot(date, slot, if (pid == brush) null else brush) }
                         .padding(horizontal = u.dp(22)),
                     horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val fg = if (went) Color(0xFF07070A) else Color.White.copy(alpha = .6f)
-                    T("${cls.code} · ${cls.room}", 23, Modifier.weight(1f), color = fg, weight = 800, maxLines = 1)
-                    when {
-                        !went -> T(tr("luego", "later"), 19, color = fg, weight = 500)
-                        phone > 0 -> T("$phone min ${tr("móvil", "phone")}", 19, color = Color(0xFFB3261E), weight = 700)
-                    }
+                    T(fixedName(pid), 24, Modifier.weight(1f), color = color, weight = 700, maxLines = 1)
+                    if (phone > 0) T("$phone min ${tr("móvil", "phone")}", 19, color = C.OrangeSoft, weight = 600, maxLines = 1)
                 }
             }
             // apuntado a un proyecto: la parte de movil sale oscurecida
