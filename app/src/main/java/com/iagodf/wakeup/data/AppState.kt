@@ -126,11 +126,17 @@ class AppState(ctx: Context) {
         store.savePhoneOk(phoneOk)
     }
 
-    /** la clase que ocupa ese tramo, si fui o si todavia no ha pasado */
+    /**
+     * la clase que ocupa ese tramo, solo si la marque (fui o voy a ir).
+     * una clase sin marcar no ocupa el hueco aunque todavia no haya pasado
+     */
     fun classAt(d: LocalDate, slot: Int): Block? = Schedule.blocksOn(d).firstOrNull {
         val first = it.start.toSecondOfDay() / 60 / SLOT_MIN
-        slot >= first && slot < first + Block.MINUTES / SLOT_MIN && Schedule.counts(it, d, attended, now)
+        slot >= first && slot < first + Block.MINUTES / SLOT_MIN && it.key(d) in attended
     }
+
+    /** minutos de las clases que tengo marcadas ese dia */
+    fun markedClassMinutes(d: LocalDate): Int = Schedule.blocksOn(d).count { it.key(d) in attended } * Block.MINUTES
 
     /** minutos de un tramo que ya han pasado */
     fun slotElapsed(d: LocalDate, slot: Int): Int = when {
@@ -149,6 +155,12 @@ class AppState(ctx: Context) {
         (log[d] ?: emptyMap()).entries.filter { it.value == projectId && classAt(d, it.key) == null }.sumOf { slotReal(d, it.key) }
 
     fun dayReal(d: LocalDate): Int = projects.sumOf { realMinutes(it.id, d) }
+
+    /** minutos de proyecto apuntados que todavia no han pasado (lo que tengo planeado) */
+    fun plannedMinutes(d: LocalDate): Int =
+        (log[d] ?: emptyMap()).entries
+            .filter { e -> projects.any { it.id == e.value } && classAt(d, e.key) == null }
+            .sumOf { SLOT_MIN - slotElapsed(d, it.key) }
 
     /** de lunes a hoy */
     val thisWeek: List<LocalDate> get() {
@@ -183,6 +195,16 @@ class AppState(ctx: Context) {
             return keptDays to keptSlots
         }
     }
+}
+
+/**
+ * cosas del dia que no son proyectos pero tambien se pintan en mi dia para planificar.
+ * van con id negativo en el mismo registro que los proyectos y no suman horas reales
+ */
+object Fixed {
+    const val MEALS = -10L
+    const val BASICS = -11L
+    val all = listOf(MEALS, BASICS)
 }
 
 fun fmtHM(min: Int): String = if (min < 60) "$min min" else "${min / 60} h ${min % 60} min"
